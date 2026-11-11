@@ -4,8 +4,6 @@
 
 Maintained by **knull**. Original credits and license terms are preserved (see [License](#license)).
 
-Les 193 fichiers JavaScript de `config.js`, `index.js`, `lib/`, `plugins/` et `eplugins/` ont été parcourus. Les modules obfusqués de `lib/` ont été déobfusqués. Une passe AST a récupéré 85 noms d’alias d’import et 18 noms de fonctions exportées; des noms courts subsistent lorsque l’obfuscation a supprimé toute indication. Les collisions de variables locales repérées ont été corrigées et les 193 fichiers passent l’analyse syntaxique. Les mises à jour automatiques et les commandes `.update` sont désactivées pour éviter qu’une mise à jour amont ne remette les fichiers obfusqués.
-
 A powerful, feature-rich WhatsApp bot with multi-session support, plugin
 system, group moderation, media tools, and an optional **API** for
 sending and receiving messages programmatically.
@@ -17,30 +15,20 @@ sending and receiving messages programmatically.
 - **Group Moderation** – anti-link, anti-spam, anti-word, warnings, welcome/goodbye.
 - **Media Tools** – stickers, conversions, downloads, and more.
 - **API Mode** – send messages and receive incoming messages via webhooks ([see below](#-api-mode)).
-- **Localized** – responses in 11 languages.
+- **Localized** – responses in French and English.
 - **Easy Deployment** – Koyeb, Render, Heroku, or any VPS/PC.
 
 ## Supported Languages
 
 Set your preferred language with `BOT_LANG` in `config.env`.
 
-| Code | Language   |
-|------|------------|
-| `en` | English    |
-| `es` | Spanish    |
-| `fr` | French     |
-| `hi` | Hindi      |
-| `bn` | Bengali    |
-| `id` | Indonesian |
-| `ur` | Urdu       |
-| `tr` | Turkish    |
-| `ru` | Russian    |
-| `ar` | Arabic     |
-| `ml` | Malayalam  |
-| `zh` | Chinese    |
+| Code | Language |
+|------|----------|
+| `en` | English  |
+| `fr` | French   |
 
 ```env
-BOT_LANG=es
+BOT_LANG=fr
 ```
 
 ---
