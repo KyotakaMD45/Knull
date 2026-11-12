@@ -215,10 +215,10 @@ message** (its own and other bots' messages are skipped):
 **Quick install** — works on Debian/Ubuntu, Fedora/RHEL, Arch, Alpine, macOS and Termux (Android). It installs Node.js, ffmpeg and yarn, downloads Knull, creates `config.env` and starts the bot:
 
 ```sh
-bash <(curl -fsSL https://tinyurl.com/knull-setup)
+bash <(curl -fsSL https://tinyurl.com/knull-bot)
 ```
 
-Without questions: `SESSION_ID=your_session bash <(curl -fsSL https://tinyurl.com/knull-setup) -y --name knull --start`. On Windows, run it inside WSL (Ubuntu).
+Without questions: `SESSION_ID=your_session bash <(curl -fsSL https://tinyurl.com/knull-bot) -y --name knull --start`. On Windows, run it inside WSL (Ubuntu).
 
 **Manual install:**
 
