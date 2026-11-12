@@ -302,6 +302,7 @@ Without questions: `SESSION_ID=your_session bash <(curl -fsSL https://tinyurl.co
 ## 🛠 Need Help?
 
 - [Command list](COMMANDES.md)
+- [Variables list](VARIABLES.md)
 - [Report a problem](https://github.com/KyotakaMD45/Knull/issues)
 
 ---
