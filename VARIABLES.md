@@ -84,7 +84,7 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | `BRAINSHOP` | Clé du chatbot BrainShop | *(clé par défaut)* |
 
 ## ✈️ Telegram (pont intégré)
-Relie le bot à Telegram. Texte **et** médias (photos/vidéos/audio/fichiers). Depuis Telegram : **répondre** à un message pour répondre à la personne, ou `/send <numéro> <message>` pour écrire en premier. À chaque redémarrage, le bot envoie une carte d'état sur Telegram. (N'utilise ni l'API ni le webhook : tout est intégré dans le bot.)
+Relie le bot à Telegram. Texte **et** médias (photos/vidéos/audio/fichiers). **Lecture seule** : tu reçois tout sur Telegram, avec les commandes `/ping`, `/alive`, `/status`, `/menu`, `/id` (pas d'envoi de messages depuis Telegram). À chaque redémarrage, le bot envoie une carte d'état sur Telegram. (N'utilise ni l'API ni le webhook : tout est intégré dans le bot.)
 | Variable | Rôle | Défaut |
 |---|---|---|
 | `TELEGRAM_TOKEN` | Token du bot Telegram (donné par @BotFather) | *(aucun)* |

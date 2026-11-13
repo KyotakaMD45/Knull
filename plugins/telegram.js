@@ -3,8 +3,7 @@
  *
  * WhatsApp <-> Telegram:
  *   - incoming WhatsApp messages (text + photos/videos/audio/files) are sent to your Telegram chat
- *   - REPLY to a forwarded message in Telegram to answer that person on WhatsApp
- *   - /send <number> <text>  to start a new WhatsApp chat from Telegram
+ *   - read-only: Telegram commands /ping /alive /status /menu /id (no sending to WhatsApp)
  *
  * Also exposes config.TG (used by the engine) so deleted messages, statuses and
  * update notices can be routed to Telegram too.
@@ -162,8 +161,25 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 			const r = route(envVar('ANTI_VIEWONCE'))
 			if (r.on) {
 				const who = contactLabel(message)
-				if (r.tg) await forwardNodeToTelegram(message.message, { prefix: '👁️ Vue unique', who })
-				if (r.wa) { try { await forwardOrBroadCast(selfJid() || message.jid, message, { viewOnce: false }) } catch {} }
+				const meta = mediaMeta(message)
+				const buffer = await downloadNode(message.message)
+				if (r.tg) {
+					if (buffer && meta.kind) await tgSendMedia(buffer, { ...meta, caption: ['👁️ Vue unique de ' + who, meta.caption].filter(Boolean).join('\n') })
+					else await forwardNodeToTelegram(message.message, { prefix: '👁️ Vue unique', who })
+				}
+				if (r.wa) {
+					const s = sock(); const self = selfJid()
+					try {
+						if (s && self && buffer && meta.kind) {
+							const field = meta.kind === 'image' ? 'image' : meta.kind === 'video' ? 'video' : meta.kind === 'audio' ? 'audio' : 'document'
+							const content = { [field]: buffer, caption: '👁️ Vue unique de ' + who }
+							if (meta.mimetype) content.mimetype = meta.mimetype
+							await s.sendMessage(self, content)
+						} else {
+							await forwardOrBroadCast(self || message.jid, message, { viewOnce: false })
+						}
+					} catch {}
+				}
 				return
 			}
 		}
@@ -214,11 +230,21 @@ function tgStatusText() {
 function menuText() {
 	return ['*✈️ Menu Telegram — Knull*', '',
 		'/ping — tester le bot',
-		'/uptime — temps de fonctionnement',
+		'/alive — le bot est en ligne (version, uptime…)',
 		'/status — état (RAM, numéro, uptime)',
-		'/send <numéro> <message> — écrire sur WhatsApp',
-		'/id — afficher le chat id', '',
-		'_Réponds à un message transféré pour répondre à la personne._',
+		'/id — afficher le chat id',
+	].join('\n')
+}
+function aliveCard() {
+	const id = firstSession()
+	const pc = (runtime[id] && runtime[id].pluginsCount) || {}
+	const s = sock(); const num = (s && s.user) ? numOf(s.user.id || s.user.jid) : '—'
+	return ['*🤖 Knull est en ligne*', '',
+		'Version : ' + (require('../config').VERSION || ''),
+		'Uptime  : ' + fmtUptime(process.uptime()),
+		'RAM     : ' + Math.round(process.memoryUsage().rss / 1048576) + ' Mo',
+		'Plugins : ' + (pc.i || 0) + ' + ' + (pc.e || 0) + ' e-plugins',
+		'Numéro  : +' + num,
 	].join('\n')
 }
 
@@ -236,25 +262,11 @@ async function onTelegram(update) {
 
 	const txt = m.text.trim()
 	if (txt === '/ping') { await tgApi('sendMessage', { chat_id: fromChat, text: '🏓 Pong !' }); return }
-	if (txt === '/uptime') { await tgApi('sendMessage', { chat_id: fromChat, text: '⏱️ Uptime : ' + fmtUptime(process.uptime()) }); return }
+	if (txt === '/alive') { await tgApi('sendMessage', { chat_id: fromChat, text: aliveCard(), parse_mode: 'Markdown' }); return }
 	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
 
-	const cmd = m.text.match(/^\/send\s+(\d{6,15})\s+([\s\S]+)/)
-	const target = cmd ? cmd[1] + '@s.whatsapp.net' : (m.reply_to_message && routeByTgMessage.get(m.reply_to_message.message_id))
-	const body = cmd ? cmd[2] : m.text
-	if (!target) {
-		if (!cmd) await tgApi('sendMessage', { chat_id: fromChat, text: 'Réponds au message transféré pour répondre, ou /send <numéro> <message>.', reply_to_message_id: m.message_id })
-		return
-	}
-	const s = sock()
-	try {
-		if (!s) throw new Error('bot non connecté')
-		await s.sendMessage(target, { text: body })
-		if (cmd) await tgApi('sendMessage', { chat_id: fromChat, text: '✅ Envoyé', reply_to_message_id: m.message_id })
-	} catch (e) {
-		await tgApi('sendMessage', { chat_id: fromChat, text: '⚠️ Échec : ' + e.message, reply_to_message_id: m.message_id })
-	}
+	// Lecture seule : envoyer des messages WhatsApp depuis Telegram est désactivé.
 }
 
 function statusCard() {
@@ -280,9 +292,8 @@ async function telegramLoop() {
 			tgApi('setMyCommands', { commands: [
 				{ command: 'menu', description: 'Menu des commandes' },
 				{ command: 'ping', description: 'Tester le bot' },
-				{ command: 'uptime', description: 'Temps de fonctionnement' },
+				{ command: 'alive', description: 'Le bot est en ligne' },
 				{ command: 'status', description: 'État du bot (RAM, numéro…)' },
-				{ command: 'send', description: 'Envoyer un message WhatsApp' },
 				{ command: 'id', description: 'Afficher le chat id' },
 			] }).catch(() => {})
 			try { const d = await (await fetch(`https://api.telegram.org/bot${t}/getUpdates?offset=-1`)).json(); if (d.ok && d.result.length) offset = d.result[d.result.length - 1].update_id + 1 } catch {}
