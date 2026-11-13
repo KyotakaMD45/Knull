@@ -165,7 +165,7 @@
     },
     "delete": {
       "desc": "Anti-delete: Recover deleted messages",
-      "example": "> *Usage Examples:*\n- delete g - Send deleted messages in the same chat\n- delete p - Send deleted messages to your chat/sudo\n- delete g pm - Same chat, only personal messages\n- delete g gm - Same chat, only group messages\n- delete p no-gm - To sudo, exclude groups\n- delete p no-pm - To sudo, exclude personal chats\n- delete <jid> - Send to a specific JID\n- delete <jid> gm - To JID, only groups\n- delete off - Disable anti-delete\n\n*Scopes:* pm, gm, no-pm, no-gm",
+      "example": "> *Usage Examples:*\n- delete g - Send deleted messages in the same chat\n- delete p - Send deleted messages to your chat/sudo\n- delete g pm - Same chat, only personal messages\n- delete g gm - Same chat, only group messages\n- delete p no-gm - To sudo, exclude groups\n- delete p no-pm - To sudo, exclude personal chats\n- delete <jid> - Send to a specific JID\n- delete <jid> gm - To JID, only groups\n- delete telegram - Send deleted messages to Telegram\n- delete both - Send to WhatsApp and Telegram\n- delete off - Disable anti-delete\n\n*Scopes:* pm, gm, no-pm, no-gm",
       "invalid_jid": "*Error:* _Invalid JID_",
       "dlt_dest_jid": "_Deleted messages will be sent to: {0}_",
       "dlt_dest_sudo": "_Deleted messages will be sent to your chat or sudo._",

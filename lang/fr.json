@@ -165,7 +165,7 @@
     },
     "delete": {
       "desc": "Anti-suppression : Récupérer les messages supprimés",
-      "example": "> *Usage Examples:*\n- delete g - Send deleted msgs in same chat\n- delete p - Send deleted msgs to sudo\n- delete g pm - Same chat, PMs only\n- delete g gm - Same chat, groups only\n- delete p no-gm - To sudo, exclude groups\n- delete p no-pm - To sudo, exclude PMs\n- delete <jid> - Send to specific JID\n- delete off - Disable\n\n*Scopes:* pm, gm, no-pm, no-gm",
+      "example": "> *Usage Examples:*\n- delete g - Send deleted msgs in same chat\n- delete p - Send deleted msgs to sudo\n- delete g pm - Same chat, PMs only\n- delete g gm - Same chat, groups only\n- delete p no-gm - To sudo, exclude groups\n- delete p no-pm - To sudo, exclude PMs\n- delete <jid> - Send to specific JID\n- delete telegram - Envoyer les messages supprimés sur Telegram\n- delete both - Sur WhatsApp et Telegram\n- delete off - Disable\n\n*Scopes:* pm, gm, no-pm, no-gm",
       "invalid_jid": "*Erreur :* _JID invalide_",
       "dlt_msg_disable": "L'anti-suppression a été désactivée.",
       "dlt_dest_jid": "_Les messages supprimés seront envoyés à : {0}_",
