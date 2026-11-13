@@ -83,25 +83,6 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` / `OPENROUTER_SYSTEM_MSG` | OpenRouter : clé, modèle, message système | *(vide)* / `openai/gpt-oss-20b:free` / *(vide)* |
 | `BRAINSHOP` | Clé du chatbot BrainShop | *(clé par défaut)* |
 
-## ✈️ Telegram (pont intégré)
-Relie le bot à Telegram. Texte **et** médias (photos/vidéos/audio/fichiers). Depuis Telegram : **répondre** à un message pour répondre à la personne, ou `/send <numéro> <message>` pour écrire en premier. À chaque redémarrage, le bot envoie une carte d'état sur Telegram.
-| Variable | Rôle | Défaut |
-|---|---|---|
-| `TELEGRAM_TOKEN` | Token du bot Telegram (donné par @BotFather) | *(aucun)* |
-| `TELEGRAM_CHAT_ID` | Chat Telegram où arrivent les messages (envoie `/id` à ton bot pour l'obtenir) | *(aucun)* |
-| `TELEGRAM_FORWARD` | Ce qui part vers Telegram : `off`, `private` (privés), `all` (+ groupes) | `private` |
-
-Activation : `.setvar TELEGRAM_TOKEN=...` puis `.setvar TELEGRAM_CHAT_ID=...`.
-
-**Choisir la destination (WhatsApp / Telegram / les deux)** — ces 3 fonctions acceptent `telegram`, `whatsapp` (ou un jid), ou `both` :
-| Variable | Rôle | Valeurs |
-|---|---|---|
-| `ANTI_DELETE` | Messages supprimés | `telegram` \| `whatsapp` \| `both` \| `on` \| `<jid>` |
-| `STATUS_FORWARD_JID` | Statuts vus | `telegram` \| `both` \| `<jid>` \| `<numéro>` |
-| `ANTI_VIEWONCE` | Capter les « vue unique » | `telegram` \| `whatsapp` \| `both` \| `off` |
-
-Exemples : `.setvar ANTI_DELETE=telegram`, `.setvar ANTI_VIEWONCE=both`, `.setvar STATUS_FORWARD_JID=telegram`.
-
 ## 🌐 Services externes
 | Variable | Rôle | Défaut |
 |---|---|---|
