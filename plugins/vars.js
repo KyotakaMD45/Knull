@@ -24,10 +24,32 @@ bot(
   async (message, match) => {
     if (!match) return await message.send(lang.plugins.delvar.usage)
     const vars = await getVars(message.id)
-    match = match.toUpperCase()
-    if (!vars[match]) return await message.send(lang.plugins.delvar.not_found.format(match))
-    await delVar(match, message.id)
-    await message.send(lang.plugins.delvar.deleted.format(match))
+    const arg = match.trim().toLowerCase()
+
+    // delvar all -> supprime toutes les variables définies
+    if (arg === 'all' || arg === 'tout') {
+      const all = Object.keys(vars)
+      if (!all.length) return await message.send(lang.plugins.delvar.not_found.format('—'))
+      for (const k of all) await delVar(k, message.id)
+      return await message.send(lang.plugins.delvar.deleted.format(all.join(', ')))
+    }
+
+    // delvar X Y Z  ou  delvar X,Y,Z  -> supprime plusieurs variables
+    const keys = match.toUpperCase().split(/[\s,]+/).filter(Boolean)
+    const deleted = []
+    const notFound = []
+    for (const k of keys) {
+      if (vars[k]) {
+        await delVar(k, message.id)
+        deleted.push(k)
+      } else {
+        notFound.push(k)
+      }
+    }
+    const out = []
+    if (deleted.length) out.push(lang.plugins.delvar.deleted.format(deleted.join(', ')))
+    if (notFound.length) out.push(lang.plugins.delvar.not_found.format(notFound.join(', ')))
+    await message.send(out.join('\n') || lang.plugins.delvar.usage)
   }
 )
 
