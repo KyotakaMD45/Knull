@@ -117,6 +117,8 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | `BACKUP_FOLDER` | Dossier de sauvegarde | *(non défini)* |
 | `NO_PLUGINS` | Ne pas charger les plugins externes | *(non défini)* |
 | `MAX_RAM_MB` | Limite mémoire : au-dessus, le bot redémarre proprement (anti-plantage, via PM2) | *(60% de la RAM)* |
+| `SESSION_BACKUP` | Sauvegarde auto de la session vers ton WhatsApp (`on`/`off`). Commande : `.savesession` | `on` |
+| `SESSION_BACKUP_H` | Fréquence de la sauvegarde auto (heures) | `12` |
 | `SUBS` | Active une fonction liée à un groupe précis | *(non défini)* |
 
 ## ⛔ Internes / debug (à ne pas toucher en principe)
