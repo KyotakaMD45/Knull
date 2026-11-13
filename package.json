@@ -1,6 +1,6 @@
 {
   "name": "knull",
-  "version": "6.2.1",
+  "version": "4.0.0",
   "description": "Knull - a multi-session WhatsApp bot built on Baileys with plugins, group moderation, media tools, and a webhook API.",
   "keywords": [
     "whatsapp",
