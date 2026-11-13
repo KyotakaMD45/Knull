@@ -161,7 +161,7 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 		if (isViewOnce(message)) {
 			const r = route(envVar('ANTI_VIEWONCE'))
 			if (r.on) {
-				const who = (message.pushName ? message.pushName + ' ' : '') + '(+' + numOf(message.participant || message.jid) + ')'
+				const who = contactLabel(message)
 				if (r.tg) await forwardNodeToTelegram(message.message, { prefix: '👁️ Vue unique', who })
 				if (r.wa) { try { await forwardOrBroadCast(selfJid() || message.jid, message, { viewOnce: false }) } catch {} }
 				return
@@ -172,7 +172,7 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 		const mode = (envVar('TELEGRAM_FORWARD') || 'private').toLowerCase()
 		if (mode === 'off') return
 		if (message.isGroup && mode !== 'all') return
-		const who = (message.pushName ? message.pushName + ' ' : '') + '(+' + numOf(message.participant || message.jid) + ')' + (message.isGroup ? ' [groupe]' : '')
+		const who = contactLabel(message)
 		const meta = mediaMeta(message)
 		if (meta.kind) {
 			const buffer = await downloadNode(message.message)
@@ -189,6 +189,39 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 	} catch {}
 })
 
+// ---- helpers : nom de l'expéditeur + commandes Telegram --------------------
+function contactLabel(message) {
+	const num = numOf(message.participant || message.jid)
+	const name = (message.pushName || '').trim()
+	return (name ? name + ' ' : '') + '(+' + num + ')' + (message.isGroup ? ' — groupe' : '')
+}
+function fmtUptime(s) {
+	s = Math.floor(s)
+	const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), mn = Math.floor((s % 3600) / 60), sc = s % 60
+	return [d && d + 'j', h && h + 'h', mn && mn + 'm', sc + 's'].filter(Boolean).join(' ')
+}
+function tgStatusText() {
+	const s = sock(); const connected = !!(s && s.user)
+	const num = connected ? numOf(s.user.id || s.user.jid) : '—'
+	return ['*📊 Statut du bot*',
+		'Connecté : ' + (connected ? '✅' : '❎'),
+		'Numéro   : +' + num,
+		'RAM      : ' + Math.round(process.memoryUsage().rss / 1048576) + ' Mo',
+		'Uptime   : ' + fmtUptime(process.uptime()),
+		'Version  : ' + (require('../config').VERSION || ''),
+	].join('\n')
+}
+function menuText() {
+	return ['*✈️ Menu Telegram — Knull*', '',
+		'/ping — tester le bot',
+		'/uptime — temps de fonctionnement',
+		'/status — état (RAM, numéro, uptime)',
+		'/send <numéro> <message> — écrire sur WhatsApp',
+		'/id — afficher le chat id', '',
+		'_Réponds à un message transféré pour répondre à la personne._',
+	].join('\n')
+}
+
 // ---- Telegram -> WhatsApp (long polling) -----------------------------------
 let announced = false
 async function onTelegram(update) {
@@ -200,6 +233,12 @@ async function onTelegram(update) {
 		return
 	}
 	if (fromChat !== String(chatId())) return
+
+	const txt = m.text.trim()
+	if (txt === '/ping') { await tgApi('sendMessage', { chat_id: fromChat, text: '🏓 Pong !' }); return }
+	if (txt === '/uptime') { await tgApi('sendMessage', { chat_id: fromChat, text: '⏱️ Uptime : ' + fmtUptime(process.uptime()) }); return }
+	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
+	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
 
 	const cmd = m.text.match(/^\/send\s+(\d{6,15})\s+([\s\S]+)/)
 	const target = cmd ? cmd[1] + '@s.whatsapp.net' : (m.reply_to_message && routeByTgMessage.get(m.reply_to_message.message_id))
@@ -237,6 +276,15 @@ async function telegramLoop() {
 		if (!t) { announced = false; await sleep(10000); continue }
 		if (t !== lastToken) {
 			lastToken = t; offset = undefined; announced = false
+			// Registers the command menu (the "Menu" button in Telegram).
+			tgApi('setMyCommands', { commands: [
+				{ command: 'menu', description: 'Menu des commandes' },
+				{ command: 'ping', description: 'Tester le bot' },
+				{ command: 'uptime', description: 'Temps de fonctionnement' },
+				{ command: 'status', description: 'État du bot (RAM, numéro…)' },
+				{ command: 'send', description: 'Envoyer un message WhatsApp' },
+				{ command: 'id', description: 'Afficher le chat id' },
+			] }).catch(() => {})
 			try { const d = await (await fetch(`https://api.telegram.org/bot${t}/getUpdates?offset=-1`)).json(); if (d.ok && d.result.length) offset = d.result[d.result.length - 1].update_id + 1 } catch {}
 		}
 		if (chatId() && !announced) { const r = await tgSend(statusCard(), { parse_mode: 'Markdown' }); if (r.ok) announced = true }
