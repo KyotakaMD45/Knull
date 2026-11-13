@@ -4,7 +4,7 @@ Deux façons de régler une variable :
 
 1. **Dans `config.env`** (au démarrage) : `NOM="valeur"`, une par ligne.
 2. **Par commande** (à chaud, sans redémarrer) — stockée en base, prioritaire sur `config.env` :
-   - `.setvar NOM:valeur` — définir une variable
+   - `.setvar NOM=valeur` — définir une variable
    - `.getvar NOM` — voir sa valeur
    - `.delvar NOM` — la supprimer
    - `.allvar` — lister toutes les variables définies
@@ -82,6 +82,15 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | `GEMINI_API_KEY` / `GEMINI_MODEL` | Gemini : clé et modèle | *(vide)* / `gemini-3.6-flash` |
 | `OPENROUTER_API_KEY` / `OPENROUTER_MODEL` / `OPENROUTER_SYSTEM_MSG` | OpenRouter : clé, modèle, message système | *(vide)* / `openai/gpt-oss-20b:free` / *(vide)* |
 | `BRAINSHOP` | Clé du chatbot BrainShop | *(clé par défaut)* |
+
+## ✈️ Telegram (pont intégré)
+Relie le bot à Telegram : tes messages WhatsApp (privés) arrivent dans un chat Telegram, et tu réponds depuis Telegram (en **répondant** au message).
+| Variable | Rôle | Défaut |
+|---|---|---|
+| `TELEGRAM_TOKEN` | Token du bot Telegram (donné par @BotFather) | *(aucun)* |
+| `TELEGRAM_CHAT_ID` | Chat Telegram où arrivent les messages (envoie `/id` à ton bot pour l'obtenir) | *(aucun)* |
+
+Activation : `.setvar TELEGRAM_TOKEN=...` puis `.setvar TELEGRAM_CHAT_ID=...`. Depuis Telegram : **répondre** à un message pour répondre à la personne, ou `/send <numéro> <message>` pour écrire en premier. (v1 : texte, chats privés.)
 
 ## 🌐 Services externes
 | Variable | Rôle | Défaut |
