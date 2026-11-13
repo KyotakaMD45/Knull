@@ -116,6 +116,7 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | `FORCE_LOGOUT` | Forcer la déconnexion | `false` |
 | `BACKUP_FOLDER` | Dossier de sauvegarde | *(non défini)* |
 | `NO_PLUGINS` | Ne pas charger les plugins externes | *(non défini)* |
+| `MAX_RAM_MB` | Limite mémoire : au-dessus, le bot redémarre proprement (anti-plantage, via PM2) | *(60% de la RAM)* |
 | `SUBS` | Active une fonction liée à un groupe précis | *(non défini)* |
 
 ## ⛔ Internes / debug (à ne pas toucher en principe)
