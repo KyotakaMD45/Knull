@@ -1,19 +1,17 @@
 /**
  * Telegram bridge — built into the bot (no separate program, no API key).
  *
- * WhatsApp <-> Telegram:
- *   - incoming WhatsApp messages (text + photos/videos/audio/files) are sent to your Telegram chat
- *   - read-only: Telegram commands /ping /alive /status /menu /id (no sending to WhatsApp)
+ * Read-only on Telegram. Ordinary WhatsApp messages are NOT forwarded.
+ * Only what you route to Telegram arrives: deleted messages, statuses, view-once.
+ * Telegram commands: /ping /alive /status /sessions /restart /menu /id.
  *
- * Also exposes config.TG (used by the engine) so deleted messages, statuses and
- * update notices can be routed to Telegram too.
+ * Exposes config.TG (used by the engine) so deleted messages, statuses and
+ * update notices can be routed to Telegram.
  *
- * Variables (set them on WhatsApp with .setvar NAME=value):
+ * Variables (set on WhatsApp):
  *   TELEGRAM_TOKEN=123456:ABC...     (from @BotFather)
  *   TELEGRAM_CHAT_ID=123456789       (send /id to your bot to get it)
- *   TELEGRAM_FORWARD=private         off | private | all   (what to forward WA->TG; default private)
- *   ANTI_VIEWONCE=telegram           off | whatsapp | telegram | both  (capture "view once" media)
- *   ANTI_DELETE / STATUS_FORWARD_JID can be set to  telegram | both  (handled by the engine)
+ *   .delete telegram | .status telegram | .vv telegram   (choose the destination)
  */
 const lib = require('../lib/')
 const { bot, forwardOrBroadCast, parsedJid } = lib
@@ -185,24 +183,8 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 			}
 		}
 
-		// 2) Normal WA -> Telegram forwarding (off by default: only deleted/status/view-once go to Telegram)
-		const mode = (envVar('TELEGRAM_FORWARD') || 'off').toLowerCase()
-		if (mode === 'off') return
-		if (message.isGroup && mode !== 'all') return
-		const who = contactLabel(message)
-		const meta = mediaMeta(message)
-		if (meta.kind) {
-			const buffer = await downloadNode(message.message)
-			if (buffer) {
-				const sent = await tgSendMedia(buffer, { ...meta, caption: [`📱 ${who}`, meta.caption].filter(Boolean).join('\n') })
-				if (sent.ok && sent.result) remember(sent.result.message_id, message.jid)
-				return
-			}
-		}
-		if (message.text) {
-			const sent = await tgSend(`📱 ${who}\n${message.text}`)
-			if (sent.ok && sent.result) remember(sent.result.message_id, message.jid)
-		}
+		// Les messages ORDINAIRES ne sont PLUS recopiés vers Telegram.
+		// Seuls les supprimés / statuts / vue unique dirigés vers Telegram y arrivent.
 	} catch {}
 })
 
@@ -314,7 +296,6 @@ function statusCard() {
 	const fmt = (v) => { const r = route(v); return r.on ? (r.tg && r.wa ? 'les deux' : r.tg ? 'Telegram' : 'WhatsApp') : '❎' }
 	return ['🔌 *Knull — pont Telegram connecté*',
 		'VERSION       : ' + (require('../config').VERSION || ''),
-		'Messages      : ' + (envVar('TELEGRAM_FORWARD') || 'off'),
 		'Supprimés     : ' + fmt(envVar('ANTI_DELETE')),
 		'Statuts       : ' + fmt(envVar('STATUS_FORWARD_JID')),
 		'Vue unique    : ' + fmt(envVar('ANTI_VIEWONCE')),
