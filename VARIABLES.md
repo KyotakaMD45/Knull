@@ -84,12 +84,12 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | `BRAINSHOP` | Clé du chatbot BrainShop | *(clé par défaut)* |
 
 ## ✈️ Telegram (pont intégré)
-Relie le bot à Telegram. Texte **et** médias (photos/vidéos/audio/fichiers). **Lecture seule** : tu reçois tout sur Telegram, avec les commandes `/ping`, `/alive`, `/status`, `/menu`, `/id` (pas d'envoi de messages depuis Telegram). À chaque redémarrage, le bot envoie une carte d'état sur Telegram. (N'utilise ni l'API ni le webhook : tout est intégré dans le bot.)
+Relie le bot à Telegram. Texte **et** médias (photos/vidéos/audio/fichiers). **Lecture seule** : tu reçois sur Telegram, avec les commandes `/ping`, `/alive`, `/status`, `/sessions`, `/restart`, `/menu`, `/id` (pas d'envoi de messages depuis Telegram). Par défaut, **seuls** les messages supprimés / statuts / vue unique dirigés vers Telegram y arrivent (pas les messages ordinaires — mets `TELEGRAM_FORWARD=private` ou `all` pour les recevoir aussi). À chaque redémarrage, une carte d'état est envoyée. (N'utilise ni l'API ni le webhook.)
 | Variable | Rôle | Défaut |
 |---|---|---|
 | `TELEGRAM_TOKEN` | Token du bot Telegram (donné par @BotFather) | *(aucun)* |
 | `TELEGRAM_CHAT_ID` | Chat Telegram où arrivent les messages (envoie `/id` à ton bot pour l'obtenir) | *(aucun)* |
-| `TELEGRAM_FORWARD` | Ce qui part vers Telegram : `off`, `private` (privés), `all` (+ groupes) | `private` |
+| `TELEGRAM_FORWARD` | Recopier les messages reçus vers Telegram : `off`, `private` (privés), `all` (+ groupes) | `off` |
 
 Activation : `.setvar TELEGRAM_TOKEN=...` puis `.setvar TELEGRAM_CHAT_ID=...`.
 

@@ -120,6 +120,7 @@ async function forwardNodeToTelegram(node, { prefix = '', who = '' } = {}) {
 	try {
 		const inner = node && node.message && (node.message.viewOnceMessageV2?.message || node.message.viewOnceMessage?.message || node.message.ephemeralMessage?.message || node.message)
 		if (!inner) return
+		if (!who && node && node.key) who = '(+' + numOf(node.key.participant || node.key.remoteJid || '') + ')'
 		const head = [prefix, who].filter(Boolean).join(' ')
 		const mediaKey = Object.keys(inner).find((k) => /imageMessage|videoMessage|audioMessage|documentMessage|stickerMessage|ptvMessage/.test(k))
 		if (mediaKey) {
@@ -184,8 +185,8 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 			}
 		}
 
-		// 2) Normal WA -> Telegram forwarding
-		const mode = (envVar('TELEGRAM_FORWARD') || 'private').toLowerCase()
+		// 2) Normal WA -> Telegram forwarding (off by default: only deleted/status/view-once go to Telegram)
+		const mode = (envVar('TELEGRAM_FORWARD') || 'off').toLowerCase()
 		if (mode === 'off') return
 		if (message.isGroup && mode !== 'all') return
 		const who = contactLabel(message)
@@ -232,8 +233,21 @@ function menuText() {
 		'/ping — tester le bot',
 		'/alive — le bot est en ligne (version, uptime…)',
 		'/status — état (RAM, numéro, uptime)',
+		'/sessions — liste des sessions WhatsApp',
+		'/restart — redémarrer le bot',
 		'/id — afficher le chat id',
 	].join('\n')
+}
+function sessionsText() {
+	const ids = Array.isArray(runtime.sessions) ? runtime.sessions : []
+	if (!ids.length) return 'Aucune session active.'
+	const lines = ids.map((id) => {
+		const r = runtime[id] || {}
+		const s = r.sock
+		const connected = !!(s && s.user)
+		return '• Session ' + id + ' : ' + (connected ? '✅ +' + numOf(s.user.id || s.user.jid) : '❎ déconnectée')
+	})
+	return ['*📱 Sessions WhatsApp*', '', ...lines].join('\n')
 }
 function aliveCard() {
 	const id = firstSession()
@@ -265,6 +279,13 @@ async function onTelegram(update) {
 	if (txt === '/alive') { await tgApi('sendMessage', { chat_id: fromChat, text: aliveCard(), parse_mode: 'Markdown' }); return }
 	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
+	if (txt === '/sessions') { await tgApi('sendMessage', { chat_id: fromChat, text: sessionsText(), parse_mode: 'Markdown' }); return }
+	if (txt === '/restart') {
+		if (process.env.pm_id === undefined) { await tgApi('sendMessage', { chat_id: fromChat, text: "⚠️ Redémarrage indisponible (le bot n'est pas sous PM2)." }); return }
+		await tgApi('sendMessage', { chat_id: fromChat, text: '♻️ Redémarrage du bot…' })
+		setTimeout(() => process.exit(0), 800)
+		return
+	}
 
 	// Lecture seule : envoyer des messages WhatsApp depuis Telegram est désactivé.
 }
@@ -273,7 +294,7 @@ function statusCard() {
 	const fmt = (v) => { const r = route(v); return r.on ? (r.tg && r.wa ? 'les deux' : r.tg ? 'Telegram' : 'WhatsApp') : '❎' }
 	return ['🔌 *Knull — pont Telegram connecté*',
 		'VERSION       : ' + (require('../config').VERSION || ''),
-		'Messages      : ' + (envVar('TELEGRAM_FORWARD') || 'private'),
+		'Messages      : ' + (envVar('TELEGRAM_FORWARD') || 'off'),
 		'Supprimés     : ' + fmt(envVar('ANTI_DELETE')),
 		'Statuts       : ' + fmt(envVar('STATUS_FORWARD_JID')),
 		'Vue unique    : ' + fmt(envVar('ANTI_VIEWONCE')),
@@ -294,6 +315,8 @@ async function telegramLoop() {
 				{ command: 'ping', description: 'Tester le bot' },
 				{ command: 'alive', description: 'Le bot est en ligne' },
 				{ command: 'status', description: 'État du bot (RAM, numéro…)' },
+				{ command: 'sessions', description: 'Liste des sessions WhatsApp' },
+				{ command: 'restart', description: 'Redémarrer le bot' },
 				{ command: 'id', description: 'Afficher le chat id' },
 			] }).catch(() => {})
 			try { const d = await (await fetch(`https://api.telegram.org/bot${t}/getUpdates?offset=-1`)).json(); if (d.ok && d.result.length) offset = d.result[d.result.length - 1].update_id + 1 } catch {}
