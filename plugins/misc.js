@@ -45,6 +45,25 @@ bot(
     if (!match) {
       return await message.send(lang.plugins.status.usage)
     }
+    const m = match.trim()
+    const low = m.toLowerCase()
+    // Emoji de réaction aux statuts (STATUS_VIEW_EMOJI)
+    if (low === 'emoji off' || low === 'noemoji') {
+      await setVar({ STATUS_VIEW_EMOJI: 'false' }, message.id)
+      return await message.send('_Emoji de statut désactivé._')
+    }
+    const em = m.match(/^emoji\s+(.+)/i)
+    if (em) {
+      await setVar({ STATUS_VIEW_EMOJI: em[1].trim() }, message.id)
+      return await message.send('_Emoji de statut : ' + em[1].trim() + '_')
+    }
+    // Où envoyer les statuts vus (STATUS_FORWARD_JID)
+    if (['telegram', 'tg', 'whatsapp', 'wa', 'both'].includes(low)) {
+      await setVar({ STATUS_FORWARD_JID: low }, message.id)
+      const dest = (low === 'telegram' || low === 'tg') ? 'Telegram' : low === 'both' ? 'WhatsApp + Telegram' : 'WhatsApp'
+      return await message.send('_Statuts vus → ' + dest + '_')
+    }
+    // Comportement existant : vue des statuts on/off
     await handleSetting(message, 'AUTO_STATUS_VIEW', match)
     await message.send(lang.plugins.common.update)
   }

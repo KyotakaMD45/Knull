@@ -481,7 +481,7 @@
       "updated": "Mention settings updated."
     },
     "status": {
-      "usage": "Usage: status on | off | no-dl | except-view <jid,...> | only-view <jid,...>",
+      "usage": "Usage: status on | off | no-dl | except-view <jid,...> | only-view <jid,...> | telegram | whatsapp | both | emoji <emojis> | emoji off",
       "desc": "Automatically manage the viewing of WhatsApp statuses."
     },
     "call": {

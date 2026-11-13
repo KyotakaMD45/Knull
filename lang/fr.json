@@ -468,7 +468,7 @@
       "updated": "Paramètres de mention mis à jour."
     },
     "status": {
-      "usage": "Utilisation : status on | off | no-dl | except-view <jid,...> | only-view <jid,...>",
+      "usage": "Utilisation : status on | off | no-dl | except-view <jid,...> | only-view <jid,...> | telegram | whatsapp | both | emoji <emojis> | emoji off",
       "desc": "Gérer automatiquement la visualisation des statuts WhatsApp."
     },
     "call": {
