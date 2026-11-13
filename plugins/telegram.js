@@ -217,15 +217,35 @@ function fmtUptime(s) {
 	const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), mn = Math.floor((s % 3600) / 60), sc = s % 60
 	return [d && d + 'j', h && h + 'h', mn && mn + 'm', sc + 's'].filter(Boolean).join(' ')
 }
+const onoff = (v) => (v === 'true' || v === true) ? '✅' : '❎'
+function destLabel(v) {
+	const r = route(v)
+	return r.on ? (r.tg && r.wa ? '✅ WhatsApp + Telegram' : r.tg ? '✅ Telegram' : '✅ WhatsApp') : '❎'
+}
 function tgStatusText() {
+	const id = firstSession()
+	const env = (runtime[id] && runtime[id].env) || {}
 	const s = sock(); const connected = !!(s && s.user)
 	const num = connected ? numOf(s.user.id || s.user.jid) : '—'
-	return ['*📊 Statut du bot*',
-		'Connecté : ' + (connected ? '✅' : '❎'),
-		'Numéro   : +' + num,
-		'RAM      : ' + Math.round(process.memoryUsage().rss / 1048576) + ' Mo',
-		'Uptime   : ' + fmtUptime(process.uptime()),
-		'Version  : ' + (require('../config').VERSION || ''),
+	const asv = env.AUTO_STATUS_VIEW
+	const emoji = env.STATUS_VIEW_EMOJI
+	return ['*📊 Statut de Knull*', '',
+		'🔌 Connecté        : ' + (connected ? '✅' : '❎'),
+		'📱 Numéro          : +' + num,
+		'🧠 RAM             : ' + Math.round(process.memoryUsage().rss / 1048576) + ' Mo',
+		'⏱️ Uptime          : ' + fmtUptime(process.uptime()),
+		'🧩 Version         : ' + (require('../config').VERSION || ''),
+		'',
+		'📖 Auto-lecture    : ' + onoff(env.SEND_READ),
+		'👀 Vue des statuts : ' + (asv && asv !== 'false' && asv !== 'null' ? '✅' : '❎'),
+		'😀 Emoji statut    : ' + (emoji && emoji !== 'false' && emoji !== 'null' ? emoji : '❎'),
+		'🚫 Rejet appels    : ' + onoff(env.REJECT_CALL),
+		'🔋 Toujours en ligne : ' + onoff(env.ALWAYS_ONLINE),
+		'🔄 Auto-update     : ' + (env.AUTO_UPDATE && env.AUTO_UPDATE !== 'false' ? '✅' : '❎'),
+		'',
+		'🗑️ Supprimés → ' + destLabel(env.ANTI_DELETE),
+		'📡 Statuts   → ' + destLabel(env.STATUS_FORWARD_JID),
+		'👁️ Vue unique → ' + destLabel(env.ANTI_VIEWONCE),
 	].join('\n')
 }
 function menuText() {
