@@ -13,6 +13,8 @@
  *   TELEGRAM_CHAT_ID=123456789       (send /id to your bot to get it)
  *   .delete telegram | .status telegram | .vv telegram   (choose the destination)
  */
+const fs = require('fs')
+const path = require('path')
 const lib = require('../lib/')
 const { bot, forwardOrBroadCast, parsedJid } = lib
 const runtime = require('../lib/config') // live registry: runtime.sessions, runtime[id].sock, runtime[id].env
@@ -68,6 +70,22 @@ async function tgSendMedia(buffer, { kind, mimetype, fileName, caption } = {}) {
 		if (caption) form.set('caption', caption.slice(0, 1024))
 		form.set(field, new Blob([buffer], { type: mimetype || 'application/octet-stream' }), fileName || ('file' + (kind === 'image' ? '.jpg' : kind === 'video' ? '.mp4' : '')))
 		const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, { method: 'POST', body: form })
+		return await res.json()
+	} catch { return { ok: false } }
+}
+
+// Envoie une photo locale (ex. media/welcome.jpg) avec légende éventuelle.
+async function tgSendPhotoFile(filePath, caption, parse_mode) {
+	const t = token(); const c = chatId()
+	if (!t || !c) return { ok: false }
+	try {
+		const buf = fs.readFileSync(filePath)
+		const form = new FormData()
+		form.set('chat_id', String(c))
+		if (caption) form.set('caption', caption.slice(0, 1024))
+		if (parse_mode) form.set('parse_mode', parse_mode)
+		form.set('photo', new Blob([buf], { type: 'image/jpeg' }), 'welcome.jpg')
+		const res = await fetch(`https://api.telegram.org/bot${t}/sendPhoto`, { method: 'POST', body: form })
 		return await res.json()
 	} catch { return { ok: false } }
 }
@@ -346,11 +364,16 @@ async function onTelegram(update) {
 
 function statusCard() {
 	const fmt = (v) => { const r = route(v); return r.on ? (r.tg && r.wa ? 'les deux' : r.tg ? 'Telegram' : 'WhatsApp') : '❎' }
-	return ['🔌 *Knull — pont Telegram connecté*',
-		'VERSION       : ' + (require('../config').VERSION || ''),
-		'Supprimés     : ' + fmt(envVar('ANTI_DELETE')),
-		'Statuts       : ' + fmt(envVar('STATUS_FORWARD_JID')),
-		'Vue unique    : ' + fmt(envVar('ANTI_VIEWONCE')),
+	const s = sock(); const num = (s && s.user) ? numOf(s.user.id || s.user.jid) : '—'
+	return ['🔌 *Knull — pont Telegram connecté*', '',
+		'📱 Numéro     : +' + num,
+		'🧩 Version    : ' + (require('../config').VERSION || ''),
+		'',
+		'🗑️ Supprimés  : ' + fmt(envVar('ANTI_DELETE')),
+		'📡 Statuts    : ' + fmt(envVar('STATUS_FORWARD_JID')),
+		'👁️ Vue unique : ' + fmt(envVar('ANTI_VIEWONCE')),
+		'',
+		'_Tape /menu pour les commandes._',
 	].join('\n')
 }
 
@@ -376,7 +399,13 @@ async function telegramLoop() {
 			] }).catch(() => {})
 			try { const d = await (await fetch(`https://api.telegram.org/bot${t}/getUpdates?offset=-1`)).json(); if (d.ok && d.result.length) offset = d.result[d.result.length - 1].update_id + 1 } catch {}
 		}
-		if (chatId() && !announced) { const r = await tgSend(statusCard(), { parse_mode: 'Markdown' }); if (r.ok) announced = true }
+		if (chatId() && !announced) {
+			const img = path.join(__dirname, '..', 'media', 'welcome.jpg')
+			const r = fs.existsSync(img)
+				? await tgSendPhotoFile(img, statusCard(), 'Markdown')
+				: await tgSend(statusCard(), { parse_mode: 'Markdown' })
+			if (r && r.ok) announced = true
+		}
 		try {
 			const res = await fetch(`https://api.telegram.org/bot${t}/getUpdates?timeout=50${offset !== undefined ? '&offset=' + offset : ''}`)
 			const data = await res.json()
