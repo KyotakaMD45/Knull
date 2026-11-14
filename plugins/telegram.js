@@ -159,13 +159,6 @@ runtime.TG = {
 }
 
 // ---- WhatsApp -> Telegram (incoming messages) ------------------------------
-const routeByTgMessage = new Map()
-function remember(tgMessageId, jid) {
-	if (!tgMessageId) return
-	routeByTgMessage.set(tgMessageId, jid)
-	if (routeByTgMessage.size > 3000) routeByTgMessage.delete(routeByTgMessage.keys().next().value)
-}
-
 bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 	try {
 		if (!token() || !chatId()) return
@@ -270,6 +263,8 @@ function menuText() {
 		'/panel — lien + mot de passe du panneau web',
 		'/restart — redémarrer le bot',
 		'/id — afficher le chat id',
+		'',
+		'_Pont en lecture seule : seuls les éléments que tu diriges vers Telegram (supprimés, statuts, vue unique) arrivent ici._',
 	].join('\n')
 }
 
@@ -333,7 +328,7 @@ async function onTelegram(update) {
 	if (fromChat !== String(chatId())) return
 
 	const txt = m.text.trim()
-	if (txt === '/ping') { await tgApi('sendMessage', { chat_id: fromChat, text: '🏓 Pong !' }); return }
+	if (txt === '/ping') { const lat = m.date ? Math.max(0, Math.round(Date.now() / 1000 - m.date)) : null; await tgApi('sendMessage', { chat_id: fromChat, text: '🏓 Pong !' + (lat !== null ? ' _(' + lat + 's)_' : ''), parse_mode: 'Markdown' }); return }
 	if (txt === '/alive') { await tgApi('sendMessage', { chat_id: fromChat, text: aliveCard(), parse_mode: 'Markdown' }); return }
 	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
@@ -345,8 +340,8 @@ async function onTelegram(update) {
 		setTimeout(() => process.exit(0), 800)
 		return
 	}
-
-	// Lecture seule : envoyer des messages WhatsApp depuis Telegram est désactivé.
+	// Commande inconnue : petit rappel (lecture seule, pas d'envoi WhatsApp depuis Telegram).
+	if (txt.startsWith('/')) { await tgApi('sendMessage', { chat_id: fromChat, text: 'Commande inconnue. Tape /menu pour la liste.' }); return }
 }
 
 function statusCard() {
@@ -370,7 +365,8 @@ async function telegramLoop() {
 			// Registers the command menu (the "Menu" button in Telegram).
 			tgApi('setMyCommands', { commands: [
 				{ command: 'menu', description: 'Menu des commandes' },
-				{ command: 'ping', description: 'Tester le bot' },
+				{ command: 'help', description: 'Aide (identique au menu)' },
+				{ command: 'ping', description: 'Tester le bot (latence)' },
 				{ command: 'alive', description: 'Le bot est en ligne' },
 				{ command: 'status', description: 'État du bot (RAM, numéro…)' },
 				{ command: 'sessions', description: 'Liste des sessions WhatsApp' },
@@ -384,7 +380,7 @@ async function telegramLoop() {
 		try {
 			const res = await fetch(`https://api.telegram.org/bot${t}/getUpdates?timeout=50${offset !== undefined ? '&offset=' + offset : ''}`)
 			const data = await res.json()
-			if (data.ok) { for (const u of data.result) { offset = u.update_id + 1; await onTelegram(u) } }
+			if (data.ok) { for (const u of data.result) { offset = u.update_id + 1; try { await onTelegram(u) } catch {} } }
 			else await sleep(15000)
 		} catch { await sleep(3000) }
 	}
