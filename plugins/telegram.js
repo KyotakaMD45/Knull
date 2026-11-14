@@ -273,25 +273,28 @@ function menuText() {
 	].join('\n')
 }
 
-// Lien direct vers le panneau web (URL détectée + port + mot de passe).
+// Lien direct vers le panneau web (URL détectée + port + mot de passe), format HTML.
 async function panelText() {
+	const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 	const port = process.env.PORT || 3000
 	const pass = process.env.PASSWORD || 'KNULL'
-	let url
-	if (process.env.RENDER_EXTERNAL_URL) url = process.env.RENDER_EXTERNAL_URL
-	else if (process.env.KOYEB_PUBLIC_DOMAIN) url = 'https://' + process.env.KOYEB_PUBLIC_DOMAIN
+	let url = '', where = ''
+	if (process.env.RENDER_EXTERNAL_URL) { url = process.env.RENDER_EXTERNAL_URL; where = 'Render' }
+	else if (process.env.KOYEB_PUBLIC_DOMAIN) { url = 'https://' + process.env.KOYEB_PUBLIC_DOMAIN; where = 'Koyeb' }
 	else {
 		let ip = ''
 		try { ip = (await (await fetch('https://api.ipify.org')).text()).trim() } catch {}
-		url = /^\d+\.\d+\.\d+\.\d+$/.test(ip) ? `http://${ip}:${port}` : `http://<IP-de-ton-serveur>:${port}`
+		if (/^\d+\.\d+\.\d+\.\d+$/.test(ip)) { url = `http://${ip}:${port}`; where = 'VPS' }
 	}
-	return ['🖥️ Panneau web Knull', '',
-		'🔗 Lien : ' + url,
-		'🔑 Mot de passe : ' + pass,
-		'🔌 Port : ' + port, '',
-		'Ouvre le lien, entre le mot de passe, et gère tes variables.',
-		'Change le mot de passe sur WhatsApp : .setvar PASSWORD=...',
-	].join('\n')
+	const lines = ['🖥️ <b>Panneau web Knull</b>', '━━━━━━━━━━━━━━']
+	if (url) lines.push('🔗 <a href="' + esc(url) + '">' + esc(url) + '</a>')
+	else lines.push('🔗 http://<b>&lt;IP-de-ton-serveur&gt;</b>:' + port, '   <i>IP publique introuvable — mets celle de ton serveur.</i>')
+	lines.push('🔑 Mot de passe : <code>' + esc(pass) + '</code>')
+	lines.push('🔌 Port : <code>' + port + '</code>')
+	if (where) lines.push('☁️ Détecté : ' + where)
+	lines.push('', '📋 <b>En 3 étapes</b>', '1️⃣ Ouvre le lien ci-dessus', '2️⃣ Entre le mot de passe', '3️⃣ Gère tes variables (comme <code>.setvar</code>)')
+	lines.push('', '🔒 <i>Change le mot de passe :</i> <code>.setvar PASSWORD=…</code>')
+	return lines.join('\n')
 }
 function sessionsText() {
 	const ids = Array.isArray(runtime.sessions) ? runtime.sessions : []
@@ -335,7 +338,7 @@ async function onTelegram(update) {
 	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/sessions') { await tgApi('sendMessage', { chat_id: fromChat, text: sessionsText(), parse_mode: 'Markdown' }); return }
-	if (txt === '/panel' || txt === '/web') { await tgApi('sendMessage', { chat_id: fromChat, text: await panelText(), disable_web_page_preview: true }); return }
+	if (txt === '/panel' || txt === '/web') { await tgApi('sendMessage', { chat_id: fromChat, text: await panelText(), parse_mode: 'HTML', disable_web_page_preview: true }); return }
 	if (txt === '/restart') {
 		if (process.env.pm_id === undefined) { await tgApi('sendMessage', { chat_id: fromChat, text: "⚠️ Redémarrage indisponible (le bot n'est pas sous PM2)." }); return }
 		await tgApi('sendMessage', { chat_id: fromChat, text: '♻️ Redémarrage du bot…' })
