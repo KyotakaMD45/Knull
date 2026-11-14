@@ -1,0 +1,18 @@
+# Afficher le dépôt en 100% JavaScript sur GitHub (Linguist).
+# Le moteur du bot est écrit en JavaScript ; le reste (config, données,
+# documentation, outillage) est exclu des statistiques de langage.
+
+# 1) Par défaut, rien n'est compté dans les stats de langage…
+*            linguist-detectable=false
+
+# 2) …sauf le JavaScript du bot.
+*.js         linguist-detectable=true
+
+# 3) Dépendances / outillage vendored (non compté de toute façon).
+.yarn/**     linguist-vendored
+yarn.lock    linguist-vendored
+*.cjs        linguist-vendored
+
+# 4) Documentation.
+*.md         linguist-documentation
+LICENSE      linguist-documentation
