@@ -113,24 +113,40 @@ function mediaMeta(message) {
 	return { kind, mimetype: obj && obj.mimetype, fileName: obj && (obj.fileName || obj.title), caption: (obj && (obj.caption)) || '' }
 }
 
+// Horodatage court et lisible (fuseau du bot si défini).
+function stamp() {
+	try {
+		return new Date().toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: process.env.TZ || process.env.TIMEZONE || undefined })
+	} catch { return '' }
+}
+// En-tête structuré : « prefix » / « 👤 expéditeur » / « 🕐 date ».
+function buildHead(prefix, who) {
+	const lines = []
+	if (prefix) lines.push(prefix)
+	if (who) lines.push(who)
+	const t = stamp()
+	if (t) lines.push('🕐 ' + t)
+	return lines.join('\n')
+}
 // Send an arbitrary WhatsApp message node to Telegram (text or media). Used by the engine.
 async function forwardNodeToTelegram(node, { prefix = '', who = '' } = {}) {
 	try {
 		const inner = node && node.message && (node.message.viewOnceMessageV2?.message || node.message.viewOnceMessage?.message || node.message.ephemeralMessage?.message || node.message)
 		if (!inner) return
 		if (!who && node) who = nodeWho(node)
-		const head = [prefix, who].filter(Boolean).join('\n')
+		const head = buildHead(prefix, who)
 		const mediaKey = Object.keys(inner).find((k) => /imageMessage|videoMessage|audioMessage|documentMessage|stickerMessage|ptvMessage/.test(k))
 		if (mediaKey) {
 			const obj = inner[mediaKey]
 			const buffer = await downloadNode(node)
 			if (buffer) {
-				await tgSendMedia(buffer, { kind: kindOfType(mediaKey), mimetype: obj.mimetype, fileName: obj.fileName || obj.title, caption: [head, obj.caption].filter(Boolean).join('\n') })
+				// En-tête + légende éventuelle, séparés par une ligne vide.
+				await tgSendMedia(buffer, { kind: kindOfType(mediaKey), mimetype: obj.mimetype, fileName: obj.fileName || obj.title, caption: [head, obj.caption].filter(Boolean).join('\n\n') })
 				return
 			}
 		}
 		const text = inner.conversation || inner.extendedTextMessage?.text || inner[mediaKey]?.caption || ''
-		await tgSend([head, text].filter(Boolean).join('\n') || head || '(message)')
+		await tgSend([head, text].filter(Boolean).join('\n\n') || head || '(message)')
 	} catch {}
 }
 
