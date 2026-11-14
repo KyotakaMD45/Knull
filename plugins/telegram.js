@@ -267,8 +267,30 @@ function menuText() {
 		'/alive — le bot est en ligne (version, uptime…)',
 		'/status — état (RAM, numéro, uptime)',
 		'/sessions — liste des sessions WhatsApp',
+		'/panel — lien + mot de passe du panneau web',
 		'/restart — redémarrer le bot',
 		'/id — afficher le chat id',
+	].join('\n')
+}
+
+// Lien direct vers le panneau web (URL détectée + port + mot de passe).
+async function panelText() {
+	const port = process.env.PORT || 3000
+	const pass = process.env.PASSWORD || 'KNULL'
+	let url
+	if (process.env.RENDER_EXTERNAL_URL) url = process.env.RENDER_EXTERNAL_URL
+	else if (process.env.KOYEB_PUBLIC_DOMAIN) url = 'https://' + process.env.KOYEB_PUBLIC_DOMAIN
+	else {
+		let ip = ''
+		try { ip = (await (await fetch('https://api.ipify.org')).text()).trim() } catch {}
+		url = /^\d+\.\d+\.\d+\.\d+$/.test(ip) ? `http://${ip}:${port}` : `http://<IP-de-ton-serveur>:${port}`
+	}
+	return ['🖥️ Panneau web Knull', '',
+		'🔗 Lien : ' + url,
+		'🔑 Mot de passe : ' + pass,
+		'🔌 Port : ' + port, '',
+		'Ouvre le lien, entre le mot de passe, et gère tes variables.',
+		'Change le mot de passe sur WhatsApp : .setvar PASSWORD=...',
 	].join('\n')
 }
 function sessionsText() {
@@ -313,6 +335,7 @@ async function onTelegram(update) {
 	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/sessions') { await tgApi('sendMessage', { chat_id: fromChat, text: sessionsText(), parse_mode: 'Markdown' }); return }
+	if (txt === '/panel' || txt === '/web') { await tgApi('sendMessage', { chat_id: fromChat, text: await panelText(), disable_web_page_preview: true }); return }
 	if (txt === '/restart') {
 		if (process.env.pm_id === undefined) { await tgApi('sendMessage', { chat_id: fromChat, text: "⚠️ Redémarrage indisponible (le bot n'est pas sous PM2)." }); return }
 		await tgApi('sendMessage', { chat_id: fromChat, text: '♻️ Redémarrage du bot…' })
@@ -348,6 +371,7 @@ async function telegramLoop() {
 				{ command: 'alive', description: 'Le bot est en ligne' },
 				{ command: 'status', description: 'État du bot (RAM, numéro…)' },
 				{ command: 'sessions', description: 'Liste des sessions WhatsApp' },
+				{ command: 'panel', description: 'Lien + mot de passe du panneau web' },
 				{ command: 'restart', description: 'Redémarrer le bot' },
 				{ command: 'id', description: 'Afficher le chat id' },
 			] }).catch(() => {})
