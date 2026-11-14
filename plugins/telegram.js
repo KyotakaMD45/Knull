@@ -279,9 +279,11 @@ function menuText() {
 		'/status — état (RAM, numéro, uptime)',
 		'/sessions — liste des sessions WhatsApp',
 		'/panel — lien + mot de passe du panneau web',
+		'/ask <question> — poser une question à Gemini (IA)',
 		'/restart — redémarrer le bot',
 		'/id — afficher le chat id',
 		'',
+		'_🤖 Astuce : réponds à une réponse de Gemini pour continuer la conversation._',
 		'_Pont en lecture seule : seuls les éléments que tu diriges vers Telegram (supprimés, statuts, vue unique) arrivent ici._',
 	].join('\n')
 }
@@ -358,8 +360,36 @@ async function onTelegram(update) {
 		setTimeout(() => process.exit(0), 800)
 		return
 	}
+
+	// Gemini : /gemini <q>, /ask <q>, ou simplement répondre à un message du bot.
+	const gm = txt.match(/^\/(?:gemini|ask)\b\s*([\s\S]*)/i)
+	const isReplyToBot = m.reply_to_message && m.reply_to_message.from && m.reply_to_message.from.is_bot && !txt.startsWith('/')
+	if (gm || isReplyToBot) {
+		const q = (gm ? gm[1] : txt).trim()
+		if (!q) { await tgApi('sendMessage', { chat_id: fromChat, text: '💬 Pose ta question : /ask <question>' }); return }
+		if (!envVar('GEMINI_API_KEY')) { await tgApi('sendMessage', { chat_id: fromChat, text: '⚠️ GEMINI_API_KEY non défini.\nSur WhatsApp : .setvar GEMINI_API_KEY=ta_cle' }); return }
+		await tgApi('sendChatAction', { chat_id: fromChat, action: 'typing' })
+		try {
+			const res = await lib.gemini(q, firstSession())
+			const srcs = tgSources(res.sources)
+			if (res.image && res.image.image) {
+				await tgSendMedia(res.image.image, { kind: 'image', mimetype: res.image.mimetype, caption: ((res.data || '') + srcs).slice(0, 1024) })
+			} else {
+				await tgApi('sendMessage', { chat_id: fromChat, text: (res.data || '…') + srcs, reply_to_message_id: m.message_id, disable_web_page_preview: true })
+			}
+		} catch (e) { await tgApi('sendMessage', { chat_id: fromChat, text: '⚠️ Gemini : ' + (e && e.message || 'erreur') }) }
+		return
+	}
+
 	// Commande inconnue : petit rappel (lecture seule, pas d'envoi WhatsApp depuis Telegram).
 	if (txt.startsWith('/')) { await tgApi('sendMessage', { chat_id: fromChat, text: 'Commande inconnue. Tape /menu pour la liste.' }); return }
+}
+
+// Sources Gemini (grounding), format texte simple pour Telegram.
+function tgSources(sources) {
+	if (!sources || !sources.length) return ''
+	const uniq = [...new Map(sources.map((s) => [s.uri, s])).values()].slice(0, 5)
+	return '\n\n📎 Sources :\n' + uniq.map((s, i) => `${i + 1}. ${s.title || s.uri}\n${s.uri}`).join('\n')
 }
 
 function statusCard() {
@@ -394,6 +424,7 @@ async function telegramLoop() {
 				{ command: 'status', description: 'État du bot (RAM, numéro…)' },
 				{ command: 'sessions', description: 'Liste des sessions WhatsApp' },
 				{ command: 'panel', description: 'Lien + mot de passe du panneau web' },
+				{ command: 'ask', description: 'Poser une question à Gemini (IA)' },
 				{ command: 'restart', description: 'Redémarrer le bot' },
 				{ command: 'id', description: 'Afficher le chat id' },
 			] }).catch(() => {})
