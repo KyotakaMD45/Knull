@@ -63,8 +63,11 @@ function tgRequest(method, buildInit) {
 	if (!t) return Promise.resolve({ ok: false })
 	return tgRun(async () => {
 		for (let i = 0; i < 3; i++) {
+			// Timeout dur : un envoi bloqué ne doit JAMAIS figer la file (sinon un seul statut passe).
+			const ac = new AbortController()
+			const to = setTimeout(() => ac.abort(), 30000)
 			try {
-				const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, buildInit())
+				const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, { ...buildInit(), signal: ac.signal })
 				const data = await res.json().catch(() => ({ ok: false }))
 				if (data && data.ok === false && data.error_code === 429) {
 					const wait = Math.min((((data.parameters && data.parameters.retry_after) || 1) * 1000) + 250, 30000)
@@ -75,6 +78,8 @@ function tgRequest(method, buildInit) {
 			} catch {
 				if (i === 2) return { ok: false }
 				await new Promise((r) => setTimeout(r, 800))
+			} finally {
+				clearTimeout(to)
 			}
 		}
 		return { ok: false }
