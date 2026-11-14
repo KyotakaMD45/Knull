@@ -43,51 +43,79 @@ function route(value) {
 }
 
 // ---- Telegram HTTP (global fetch / FormData / Blob, Node 20+) ---------------
-async function tgApi(method, params) {
+// File d'envoi séquentielle : évite les rafales (sinon Telegram renvoie 429 et
+// certains statuts/supprimés sont perdus). Un envoi à la fois, petit espacement,
+// et réessai automatique si Telegram demande d'attendre (429).
+let _chain = Promise.resolve()
+let _last = 0
+function tgRun(fn) {
+	const p = _chain.then(async () => {
+		const gap = 350 - (Date.now() - _last)
+		if (gap > 0) await new Promise((r) => setTimeout(r, gap))
+		try { return await fn() } finally { _last = Date.now() }
+	})
+	_chain = p.then(() => {}, () => {})
+	return p
+}
+// Requête Telegram passée par la file, avec réessai sur 429 / erreur réseau.
+function tgRequest(method, buildInit) {
 	const t = token()
-	if (!t) return { ok: false }
-	try {
-		const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(params),
-		})
-		return await res.json()
-	} catch { return { ok: false } }
+	if (!t) return Promise.resolve({ ok: false })
+	return tgRun(async () => {
+		for (let i = 0; i < 3; i++) {
+			try {
+				const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, buildInit())
+				const data = await res.json().catch(() => ({ ok: false }))
+				if (data && data.ok === false && data.error_code === 429) {
+					const wait = Math.min((((data.parameters && data.parameters.retry_after) || 1) * 1000) + 250, 30000)
+					await new Promise((r) => setTimeout(r, wait))
+					continue
+				}
+				return data
+			} catch {
+				if (i === 2) return { ok: false }
+				await new Promise((r) => setTimeout(r, 800))
+			}
+		}
+		return { ok: false }
+	})
+}
+
+function tgApi(method, params) {
+	return tgRequest(method, () => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params) }))
 }
 const tgSend = (text, extra = {}) => { const c = chatId(); return c ? tgApi('sendMessage', { chat_id: c, text, ...extra }) : Promise.resolve({ ok: false }) }
 
-async function tgSendMedia(buffer, { kind, mimetype, fileName, caption } = {}) {
-	const t = token(); const c = chatId()
-	if (!t || !c || !buffer) return { ok: false }
+function tgSendMedia(buffer, { kind, mimetype, fileName, caption } = {}) {
+	const c = chatId()
+	if (!c || !buffer) return Promise.resolve({ ok: false })
 	let method = 'sendDocument', field = 'document'
 	if (kind === 'image') { method = 'sendPhoto'; field = 'photo' }
 	else if (kind === 'video') { method = 'sendVideo'; field = 'video' }
 	else if (kind === 'audio') { method = 'sendAudio'; field = 'audio' }
-	try {
+	return tgRequest(method, () => {
 		const form = new FormData()
 		form.set('chat_id', String(c))
 		if (caption) form.set('caption', caption.slice(0, 1024))
 		form.set(field, new Blob([buffer], { type: mimetype || 'application/octet-stream' }), fileName || ('file' + (kind === 'image' ? '.jpg' : kind === 'video' ? '.mp4' : '')))
-		const res = await fetch(`https://api.telegram.org/bot${t}/${method}`, { method: 'POST', body: form })
-		return await res.json()
-	} catch { return { ok: false } }
+		return { method: 'POST', body: form }
+	})
 }
 
 // Envoie une photo locale (ex. media/welcome.jpg) avec légende éventuelle.
-async function tgSendPhotoFile(filePath, caption, parse_mode) {
-	const t = token(); const c = chatId()
-	if (!t || !c) return { ok: false }
-	try {
-		const buf = fs.readFileSync(filePath)
+function tgSendPhotoFile(filePath, caption, parse_mode) {
+	const c = chatId()
+	if (!c) return Promise.resolve({ ok: false })
+	let buf
+	try { buf = fs.readFileSync(filePath) } catch { return Promise.resolve({ ok: false }) }
+	return tgRequest('sendPhoto', () => {
 		const form = new FormData()
 		form.set('chat_id', String(c))
 		if (caption) form.set('caption', caption.slice(0, 1024))
 		if (parse_mode) form.set('parse_mode', parse_mode)
 		form.set('photo', new Blob([buf], { type: 'image/jpeg' }), 'welcome.jpg')
-		const res = await fetch(`https://api.telegram.org/bot${t}/sendPhoto`, { method: 'POST', body: form })
-		return await res.json()
-	} catch { return { ok: false } }
+		return { method: 'POST', body: form }
+	})
 }
 
 // ---- media helpers ---------------------------------------------------------
@@ -349,7 +377,19 @@ async function onTelegram(update) {
 
 	const txt = m.text.trim()
 	if (txt === '/ping') { const lat = m.date ? Math.max(0, Math.round(Date.now() / 1000 - m.date)) : null; await tgApi('sendMessage', { chat_id: fromChat, text: '🏓 Pong !' + (lat !== null ? ' _(' + lat + 's)_' : ''), parse_mode: 'Markdown' }); return }
-	if (txt === '/alive') { await tgApi('sendMessage', { chat_id: fromChat, text: aliveCard(), parse_mode: 'Markdown' }); return }
+	if (txt === '/alive') {
+		try {
+			// Même message que .alive sur WhatsApp (texte personnalisé + #uptime), média inclus.
+			const a = await lib.aliveMessage('', { id: firstSession(), sudo: false, fromMe: false })
+			if (a && a.type && a.type !== 'text' && Buffer.isBuffer(a.msg)) {
+				await tgSendMedia(a.msg, { kind: a.type, caption: ((a.options && a.options.caption) || '').slice(0, 1024) })
+			} else {
+				const txt2 = typeof (a && a.msg) === 'string' ? a.msg : (a && a.options && a.options.caption) || 'Je suis en vie'
+				await tgApi('sendMessage', { chat_id: fromChat, text: txt2 })
+			}
+		} catch { await tgApi('sendMessage', { chat_id: fromChat, text: aliveCard(), parse_mode: 'Markdown' }) }
+		return
+	}
 	if (txt === '/status') { await tgApi('sendMessage', { chat_id: fromChat, text: tgStatusText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/menu' || txt === '/help') { await tgApi('sendMessage', { chat_id: fromChat, text: menuText(), parse_mode: 'Markdown' }); return }
 	if (txt === '/sessions') { await tgApi('sendMessage', { chat_id: fromChat, text: sessionsText(), parse_mode: 'Markdown' }); return }
