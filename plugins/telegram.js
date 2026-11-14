@@ -118,8 +118,8 @@ async function forwardNodeToTelegram(node, { prefix = '', who = '' } = {}) {
 	try {
 		const inner = node && node.message && (node.message.viewOnceMessageV2?.message || node.message.viewOnceMessage?.message || node.message.ephemeralMessage?.message || node.message)
 		if (!inner) return
-		if (!who && node && node.key) who = '(+' + numOf(node.key.participant || node.key.remoteJid || '') + ')'
-		const head = [prefix, who].filter(Boolean).join(' ')
+		if (!who && node) who = nodeWho(node)
+		const head = [prefix, who].filter(Boolean).join('\n')
 		const mediaKey = Object.keys(inner).find((k) => /imageMessage|videoMessage|audioMessage|documentMessage|stickerMessage|ptvMessage/.test(k))
 		if (mediaKey) {
 			const obj = inner[mediaKey]
@@ -189,10 +189,25 @@ bot({ on: 'text', fromMe: false, type: 'telegram' }, async (message) => {
 })
 
 // ---- helpers : nom de l'expéditeur + commandes Telegram --------------------
+// Nom lisible : « 👤 Nom (+number) » (+ « — groupe » en groupe).
+function prettyWho(name, num, isGroup) {
+	name = (name || '').trim()
+	const label = '👤 ' + (name ? name + ' ' : '') + (num ? '(+' + num + ')' : '')
+	return isGroup ? label + ' — groupe' : label
+}
 function contactLabel(message) {
 	const num = numOf(message.participant || message.jid)
-	const name = (message.pushName || '').trim()
-	return (name ? name + ' ' : '') + '(+' + num + ')' + (message.isGroup ? ' — groupe' : '')
+	return prettyWho(message.pushName, num, message.isGroup)
+}
+// Depuis un nœud brut WhatsApp ({ key, message, pushName }).
+function nodeWho(node) {
+	try {
+		const key = (node && node.key) || {}
+		const isGroup = String(key.remoteJid || '').endsWith('@g.us')
+		const num = numOf(key.participant || key.remoteJid || '')
+		const name = node.pushName || node.verifiedBizName || ''
+		return prettyWho(name, num, isGroup)
+	} catch { return '' }
 }
 function fmtUptime(s) {
 	s = Math.floor(s)
