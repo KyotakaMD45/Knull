@@ -9,16 +9,12 @@ bot(
   async (message, match) => {
     const parts = match.trim().split(/\s+/)
     const dest = parts[0] || ''
-    const destL = dest.toLowerCase()
     const scope = parts[1]?.toLowerCase() || ''
     const jid = parsedJid(dest)[0]
-    const isDisable = destL === 'off' || destL === 'false'
-    const isTg = destL === 'telegram' || destL === 'tg'
-    const isWa = destL === 'whatsapp' || destL === 'wa'
-    const isBoth = destL === 'both'
+    const isDisable = dest === 'off' || dest === 'false'
     const validScopes = ['pm', 'gm', 'no-pm', 'no-gm']
 
-    if (!dest || (!['p', 'g', 'off', 'false', 'telegram', 'tg', 'whatsapp', 'wa', 'both'].includes(destL) && !jid)) {
+    if (!dest || (!['p', 'g', 'off', 'false'].includes(dest) && !jid)) {
       return message.send(lang.plugins.delete.example)
     }
 
@@ -47,11 +43,7 @@ bot(
     } else {
       const destText = jid
         ? lang.plugins.delete.dlt_dest_jid.replace('{0}', jid)
-        : isTg
-        ? '_Deleted messages will be sent to Telegram._'
-        : isBoth
-        ? '_Deleted messages will be sent to WhatsApp and Telegram._'
-        : dest === 'p' || isWa
+        : dest === 'p'
         ? lang.plugins.delete.dlt_dest_sudo
         : lang.plugins.delete.dlt_dest_chat
 

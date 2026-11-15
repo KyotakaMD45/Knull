@@ -57,11 +57,11 @@ bot(
       await setVar({ STATUS_VIEW_EMOJI: em[1].trim() }, message.id)
       return await message.send('_Emoji de statut : ' + em[1].trim() + '_')
     }
-    // Où envoyer les statuts vus (STATUS_FORWARD_JID)
-    if (['telegram', 'tg', 'whatsapp', 'wa', 'both'].includes(low)) {
-      await setVar({ STATUS_FORWARD_JID: low }, message.id)
-      const dest = (low === 'telegram' || low === 'tg') ? 'Telegram' : low === 'both' ? 'WhatsApp + Telegram' : 'WhatsApp'
-      return await message.send('_Statuts vus → ' + dest + '_')
+    // Où envoyer les statuts vus (STATUS_FORWARD_JID) : un numéro/JID, ou vide pour le chat du bot.
+    const fwd = m.match(/^forward\s+(.+)/i)
+    if (fwd) {
+      await setVar({ STATUS_FORWARD_JID: fwd[1].trim() }, message.id)
+      return await message.send('_Statuts vus → ' + fwd[1].trim() + '_')
     }
     // Comportement existant : vue des statuts on/off
     await handleSetting(message, 'AUTO_STATUS_VIEW', match)
