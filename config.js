@@ -20,7 +20,7 @@ module.exports = {
   VERSION: require('./package.json').version,
   SESSION_ID: (process.env.SESSION_ID || '').trim(),
   // Serveur d'où télécharger la session (ex. le générateur local "session id base").
-  SESSION_URL: (process.env.SESSION_URL || 'https://api.levanter.site/json/').trim(),
+  SESSION_URL: (process.env.SESSION_URL || 'https://nexora-inky-delta.vercel.app/json/').trim(),
   DATABASE:
     DATABASE_URL === databasePath
       ? new Sequelize({

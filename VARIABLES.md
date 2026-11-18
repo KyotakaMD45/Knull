@@ -17,7 +17,7 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 | Variable | Rôle | Défaut |
 |---|---|---|
 | `SESSION_ID` | Identifiant de session WhatsApp (créé par Nexora). Vide = scan QR | *(vide)* |
-| `SESSION_URL` | Serveur d'où télécharger la session (inutile avec un ID Nexora court/long) | `https://api.levanter.site/json/` |
+| `SESSION_URL` | Serveur d'où le bot télécharge une session à ID court (`Nexora_…`) : ton site KNULL | `https://nexora-inky-delta.vercel.app/json/` |
 | `SESSION_NAME` | Nom affiché de la session (logs, menu) | *(= l'ID)* |
 | `SUDO` | Numéros admin en plus de toi, séparés par virgule | *(vide)* |
 | `PREFIX` | Préfixe des commandes | `^[.,!]` (`.` `,` `!`) |
