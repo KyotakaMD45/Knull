@@ -1,3 +1,4 @@
+const { KNULL_API } = require('../config')
 const { bot, generateList, getJson } = require('../lib/')
 
 bot(
@@ -8,7 +9,7 @@ bot(
   },
   async (message, match) => {
     if (!match) {
-      const { result } = await getJson('https://levanter.onrender.com/news')
+      const { result } = await getJson(KNULL_API + '/news')
       const list = generateList(
         result.map(({ title, url, time }) => ({
           _id: `🆔 &id\n`,
@@ -24,7 +25,7 @@ bot(
       return await message.send(list.message, {}, list.type)
     }
     if (match.startsWith('http')) {
-      const { result } = await getJson(`https://levanter.onrender.com/news?url=${match}`)
+      const { result } = await getJson(`${KNULL_API}/news?url=${match}`)
       return await message.send(result, { quoted: message.data })
     }
   }

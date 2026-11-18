@@ -1,3 +1,4 @@
+const { KNULL_API } = require('../config')
 const fs = require('fs')
 const { getJson, sticker, bot, getBuffer } = require('../lib')
 bot(
@@ -10,7 +11,7 @@ bot(
   async (message, match) => {
     if (!match) return await message.send('Example .emix 🙂🙂')
     const { result } = await getJson(
-      `https://levanter.onrender.com/emix?q=${encodeURIComponent(match)}`
+      `${KNULL_API}/emix?q=${encodeURIComponent(match)}`
     )
     if (!result)
       return await message.send('_Not supported_', {

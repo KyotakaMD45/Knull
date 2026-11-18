@@ -18,6 +18,8 @@ Les valeurs `true`/`false` sont du texte. Les listes de numéros/jids sont sépa
 |---|---|---|
 | `SESSION_ID` | Identifiant de session WhatsApp (créé par Nexora). Vide = scan QR | *(vide)* |
 | `SESSION_URL` | Serveur d'où le bot télécharge une session à ID court (`Nexora_…`) : ton site KNULL | `https://nexora-inky-delta.vercel.app/json/` |
+| `KNULL_API` | Serveur d'API utilisé pour les téléchargements, l'IA et les outils (remplaçable par le tien) | `https://levanter.onrender.com` |
+| `KNULL_PLUGIN_STORE` | Store des plugins externes | `https://levanter-plugin.levanter.site` |
 | `SESSION_NAME` | Nom affiché de la session (logs, menu) | *(= l'ID)* |
 | `SUDO` | Numéros admin en plus de toi, séparés par virgule | *(vide)* |
 | `PREFIX` | Préfixe des commandes | `^[.,!]` (`.` `,` `!`) |
@@ -141,7 +143,7 @@ Exemples : `.setvar ANTI_DELETE=telegram`, `.setvar ANTI_VIEWONCE=both`, `.setva
 | `SUBS` | Active une fonction liée à un groupe précis | *(non défini)* |
 
 ## ⛔ Internes / debug (à ne pas toucher en principe)
-`HEROKU_TEST`, `LEVANTER_TEST`, `DEBUG_EVENT`, `DEBUG_RESTART`, `EMIT_OWN_EVENT`, `TEST_MSG`,
+`HEROKU_TEST`, `KNULL_TEST`, `DEBUG_EVENT`, `DEBUG_RESTART`, `EMIT_OWN_EVENT`, `TEST_MSG`,
 `RESTART_CMD`, `STOP_CMD`, `NODE_TLS_REJECT_UNAUTHORIZED`, `PASSWORD`, `PASSWORD_U`,
 `AMENU_CACHE_SIZE`, `AMENU_CACHE_TTL`, `NR_CACHE_SIZE`, `NR_CACHE_TTL`,
 `XMESSAGE`, `XMESSAGE_TOJID`, `VV`, `L`, `WEB`, `NEXORA_STORE`,

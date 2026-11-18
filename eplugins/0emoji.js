@@ -1,3 +1,4 @@
+const { KNULL_API } = require('../config')
 const { getJson, sticker, bot } = require('../lib')
 
 bot(
@@ -10,7 +11,7 @@ bot(
 	async (message, match) => {
 		if (!match) return await message.send('Example .emoji 🙂')
 		const { status, url } = await getJson(
-			`https://levanter.onrender.com/emoji?q=${encodeURIComponent(match)}`
+			`${KNULL_API}/emoji?q=${encodeURIComponent(match)}`
 		)
 		if (!status)
 			return await message.send('_Emoji not found_', {

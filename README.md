@@ -256,7 +256,7 @@ Without questions: `SESSION_ID=your_session bash <(curl -fsSL https://tinyurl.co
    ```sh
    SESSION_ID=your_session_id_here
    PREFIX=.
-   STICKER_PACKNAME=LyFE
+   STICKER_PACKNAME=Knull
    ALWAYS_ONLINE=false
    RMBG_KEY=null
    LANGUAG=en

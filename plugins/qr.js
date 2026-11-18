@@ -1,3 +1,4 @@
+const { KNULL_API } = require('../config')
 const { bot, lang } = require('../lib/')
 const jimp = require('jimp')
 const QRReader = require('qrcode-reader')
@@ -5,7 +6,7 @@ const QRReader = require('qrcode-reader')
 bot({ pattern: 'qr ?(.*)', desc: lang.plugins.qr.desc, type: 'misc' }, async (message, match) => {
   if (match)
     return await message.sendFromUrl(
-      `https://levanter.onrender.com/gqr?text=${encodeURIComponent(match)}`
+      `${KNULL_API}/gqr?text=${encodeURIComponent(match)}`
     )
   if (!message.reply_message || !message.reply_message.image)
     return await message.send(lang.plugins.qr.usage)

@@ -1,3 +1,4 @@
+const { KNULL_API } = require('../config')
 const { bot, getJson } = require('../lib')
 
 bot(
@@ -9,7 +10,7 @@ bot(
 	},
 	async (message, match) => {
 		if (!match) return await message.send('*Example :* 4 * 4')
-		const { result } = await getJson(`https://levanter.onrender.com/calc?q=${encodeURIComponent(match)}`)
+		const { result } = await getJson(`${KNULL_API}/calc?q=${encodeURIComponent(match)}`)
 		return await message.send('```' + result + '```')
 	}
 )

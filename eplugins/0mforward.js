@@ -30,11 +30,11 @@ bot(
 		}
 		// ADDED /* TO REMOVE LINK PREVIEW TYPE
 		options.linkPreview = {
-			head: 'LyFE',
+			head: 'Knull',
 			body: '❣',
 			mediaType: 2, //3 for video
 			thumbnail: buff1.buffer,
-			sourceUrl: 'https://www.github.com/lyfe00011/whatsapp-bot-md/wiki',
+			sourceUrl: 'https://github.com/KyotakaMD45/Knull',
 		}
 		// ADDED */ TO REMOVE LINK PREVIEW TYPE
 

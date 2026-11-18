@@ -1,3 +1,4 @@
+const { KNULL_API } = require('../config')
 const { bot, getJson, getBuffer } = require('../lib')
 
 bot(
@@ -11,7 +12,7 @@ bot(
 		if (!match)
 			return await message.send('*Give me a instagram username*')
 		const { result, status } = await getJson(
-			`https://levanter.onrender.com/ig?q=${encodeURIComponent(match)}`
+			`${KNULL_API}/ig?q=${encodeURIComponent(match)}`
 		)
 		if (!status) return await message.send('*not found*')
 		const { name, username, avatar, posts, following, followers, description } =

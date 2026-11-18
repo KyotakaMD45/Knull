@@ -21,6 +21,10 @@ module.exports = {
   SESSION_ID: (process.env.SESSION_ID || '').trim(),
   // Serveur d'où télécharger la session (ex. le générateur local "session id base").
   SESSION_URL: (process.env.SESSION_URL || 'https://nexora-inky-delta.vercel.app/json/').trim(),
+  // API server used for downloads, AI and tools (default: the upstream public API).
+  KNULL_API: (process.env.KNULL_API || 'https://levanter.onrender.com').trim().replace(/\/+$/, ''),
+  // External plugin store.
+  KNULL_PLUGIN_STORE: (process.env.KNULL_PLUGIN_STORE || 'https://levanter-plugin.levanter.site').trim().replace(/\/+$/, ''),
   DATABASE:
     DATABASE_URL === databasePath
       ? new Sequelize({
