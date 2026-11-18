@@ -12,7 +12,6 @@
 .yarn/**     linguist-vendored
 yarn.lock    linguist-vendored
 *.cjs        linguist-vendored
-media/panel/** linguist-vendored
 
 # 4) Documentation.
 *.md         linguist-documentation
